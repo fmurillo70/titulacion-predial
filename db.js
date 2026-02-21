@@ -1,60 +1,52 @@
-// db.js (COMPLETO)
-(() => {
-  const DB_NAME = "caracterizacion_predial";
-  const DB_VERSION = 1;
-  const STORE = "encuestas";
+// db.js - IndexedDB simple
+let db = null;
 
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
+const DB_NAME = "encuestasDB";
+const STORE = "encuestas";
+const VERSION = 1;
 
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE)) {
-          const store = db.createObjectStore(STORE, { keyPath: "id" });
-          store.createIndex("createdAt", "createdAt");
-          store.createIndex("status", "status");
-        }
-      };
+const req = indexedDB.open(DB_NAME, VERSION);
 
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+req.onupgradeneeded = (e) => {
+  db = e.target.result;
+  if (!db.objectStoreNames.contains(STORE)) {
+    db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
   }
+};
 
-  async function add(item) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).put(item);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+req.onsuccess = (e) => {
+  db = e.target.result;
+  // si app.js ya cargó, cargará la lista al arrancar
+  if (typeof window.__onDBReady === "function") window.__onDBReady();
+};
 
-  async function all() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, "readonly");
-      const req = tx.objectStore(STORE).getAll();
-      req.onsuccess = () => {
-        const arr = req.result || [];
-        arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        resolve(arr);
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }
+req.onerror = () => {
+  alert("Error abriendo IndexedDB (almacenamiento offline).");
+};
 
-  async function clear() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).clear();
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+function dbAdd(data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).add(data);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
 
-  window.DB = { add, all, clear };
-})();
+function dbAll() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readonly");
+    const r = tx.objectStore(STORE).getAll();
+    r.onsuccess = () => resolve(r.result || []);
+    r.onerror = () => reject(r.error);
+  });
+}
+
+function dbClear() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const r = tx.objectStore(STORE).clear();
+    r.onsuccess = () => resolve(true);
+    r.onerror = () => reject(r.error);
+  });
+}

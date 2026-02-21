@@ -1,267 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Titulación Predial Offline</title>
 
-  <title>Caracterización Predial</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1f2937" />
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1976d2">
+  <link rel="stylesheet" href="styles.css" />
 
-  <link rel="stylesheet" href="styles.css">
-
-  <!-- MAPA (Leaflet) -->
-  <link rel="stylesheet" href="./node_modules/leaflet/dist/leaflet.css">
+  <!-- Leaflet por CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
-
-  <header class="topbar">
-    <h2>Caracterización Predial</h2>
-    <div class="sub">Modo offline • Guardado local automático</div>
+  <header class="top">
+    <h1>Titulación Predial (Offline)</h1>
+    <p class="muted">Captura: Foto + GPS + almacenamiento sin internet (IndexedDB)</p>
   </header>
 
-  <main class="card">
-
-    <!-- Barra de progreso -->
-    <div class="progress">
-      <div id="progressBar" class="progress-bar" style="width: 20%"></div>
-    </div>
-
-    <!-- Formulario por pasos -->
-    <form id="formEncuesta">
-
-      <!-- PASO 1: Predio -->
-      <section class="step active" data-step="1">
-        <h3>1) Identificación del predio</h3>
-
-        <div class="grid2">
-          <div>
-            <label>Departamento</label>
-            <input type="text" id="depto" placeholder="Ej: Boyacá">
-          </div>
-          <div>
-            <label>Municipio</label>
-            <input type="text" id="municipio" placeholder="Ej: Puerto Boyacá">
-          </div>
-          <div>
-            <label>Barrio / Vereda</label>
-            <input type="text" id="barrio" placeholder="Ej: Centro">
-          </div>
-          <div>
-            <label>Dirección del predio</label>
-            <input type="text" id="direccion" placeholder="Ej: Calle 10 # 5-20" required>
-          </div>
-          <div>
-            <label>Cédula catastral</label>
-            <input type="text" id="cedulaCatastral" placeholder="Opcional">
-          </div>
-          <div>
-            <label>FMI / Matrícula</label>
-            <input type="text" id="fmi" placeholder="Opcional">
-          </div>
-        </div>
-
-        <label>Uso del inmueble</label>
-        <select id="usoInmueble">
-          <option value="">Seleccione...</option>
-          <option>Casa</option>
-          <option>Casa lote</option>
-          <option>Comercio</option>
-          <option>Mixto</option>
-          <option>Otro</option>
-        </select>
-
-        <div class="nav">
-          <button type="button" class="btn ghost" disabled>Anterior</button>
-          <button type="button" class="btn" id="btnNext1">Siguiente</button>
-        </div>
-      </section>
-
-      <!-- PASO 2: Ocupación -->
-      <section class="step" data-step="2">
-        <h3>2) Ocupación</h3>
-
-        <div class="grid2">
-          <div>
-            <label>Nombre del ocupante</label>
-            <input type="text" id="nombreOcupante" placeholder="Nombre completo" required>
-          </div>
-          <div>
-            <label>Teléfono</label>
-            <input type="tel" id="telefonoOcupante" placeholder="Opcional">
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div>
-            <label>Año desde que ocupa</label>
-            <input type="number" id="anioOcupacion" min="1900" max="2100" placeholder="Ej: 2018">
-          </div>
-          <div>
-            <label>Tipo de ocupación</label>
-            <select id="tipoOcupacion">
-              <option value="">Seleccione...</option>
-              <option>Continua</option>
-              <option>Interrumpida</option>
-            </select>
-          </div>
-        </div>
-
-        <label>¿Cómo ocupó / adquirió el predio?</label>
-        <textarea id="descripcionOcupacion" rows="4" placeholder="Breve descripción"></textarea>
-
-        <div class="nav">
-          <button type="button" class="btn ghost" id="btnBack2">Anterior</button>
-          <button type="button" class="btn" id="btnNext2">Siguiente</button>
-        </div>
-      </section>
-
-      <!-- PASO 3: Hogar -->
-      <section class="step" data-step="3">
-        <h3>3) Hogar</h3>
-
-        <div class="grid2">
-          <div>
-            <label>Número de personas en el hogar</label>
-            <input type="number" id="numPersonas" min="1" placeholder="Ej: 4">
-          </div>
-          <div>
-            <label>Número de menores</label>
-            <input type="number" id="numMenores" min="0" placeholder="Ej: 2">
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div>
-            <label>Ingresos del hogar (total)</label>
-            <input type="number" id="ingresos" min="0" step="1000" placeholder="Ej: 1500000">
-          </div>
-          <div>
-            <label>¿Recibió subsidio de vivienda?</label>
-            <select id="subsidioVivienda">
-              <option value="">Seleccione...</option>
-              <option>Si</option>
-              <option>No</option>
-            </select>
-          </div>
-        </div>
-
-        <label>¿Tiene otros predios / vivienda?</label>
-        <select id="otrosPredios">
-          <option value="">Seleccione...</option>
-          <option>Si</option>
-          <option>No</option>
-        </select>
-
-        <div class="nav">
-          <button type="button" class="btn ghost" id="btnBack3">Anterior</button>
-          <button type="button" class="btn" id="btnNext3">Siguiente</button>
-        </div>
-      </section>
-
-      <!-- PASO 4: Checklist -->
-      <section class="step" data-step="4">
-        <h3>4) Checklist de verificación</h3>
-
-        <div class="checkgrid">
-          <label class="check"><input type="checkbox" id="chkHabita"> Habita actualmente el predio</label>
-          <label class="check"><input type="checkbox" id="chkOtraVivienda"> Tiene otra vivienda</label>
-          <label class="check"><input type="checkbox" id="chkServicioPublico"> Tiene recibos/servicios como prueba</label>
-          <label class="check"><input type="checkbox" id="chkPredial"> Está al día en predial</label>
-          <label class="check"><input type="checkbox" id="chkDispuestoPagar"> Dispuesto a ponerse al día</label>
-        </div>
-
-        <label>Observaciones (Checklist)</label>
-        <textarea id="obsChecklist" rows="3" placeholder="Observaciones"></textarea>
-
-        <div class="nav">
-          <button type="button" class="btn ghost" id="btnBack4">Anterior</button>
-          <button type="button" class="btn" id="btnNext4">Siguiente</button>
-        </div>
-      </section>
-
-      <!-- PASO 5: Acta / Final -->
-      <section class="step" data-step="5">
-        <h3>5) Acta y finalización</h3>
-
-        <label>Observaciones generales</label>
-        <textarea id="observaciones" rows="4" placeholder="Observaciones finales"></textarea>
-
-        <!-- BLOQUE GPS + FOTO + MAPA -->
-        <div class="card" style="margin-top:14px;">
-          <h3>Ubicación y evidencia</h3>
-
-          <div class="toolbar">
-            <button class="btn ghost" id="btnGPS" type="button">Capturar GPS</button>
-            <input type="file" id="foto" accept="image/*" capture="environment">
-          </div>
-
-          <div id="gpsInfo" class="sub">GPS: sin capturar</div>
-
-          <img id="fotoPreview" style="max-width:220px; display:none; margin-top:10px; border-radius:12px;">
-
-          <div id="map" style="height:280px; margin-top:10px; border-radius:12px; overflow:hidden;"></div>
-        </div>
-
-        <div class="note">
-          Al finalizar, la encuesta queda <b>lista</b> y se marca como <b>PENDIENTE_SYNC</b> para enviar cuando haya internet.
-        </div>
-
-        <div class="nav">
-          <button type="button" class="btn ghost" id="btnBack5">Anterior</button>
-          <button type="submit" class="btn success">Finalizar y guardar</button>
-        </div>
-      </section>
-
-    </form>
-  </main>
-
   <section class="card">
-    <h3>Bandeja (offline)</h3>
-    <div class="sub">Aquí ves todo lo guardado en la tablet/PC (IndexedDB).</div>
+    <h2>Formulario</h2>
 
-    <div class="toolbar">
-      <button class="btn ghost" id="btnRefrescar" type="button">Refrescar</button>
-      <button class="btn" id="btnExportar" type="button">Exportar (Excel)</button>
-      <button class="btn danger" id="btnBorrarTodo" type="button">Borrar todo (pruebas)</button>
-    </div>
+    <form id="formEncuesta">
+      <label>Nombre</label>
+      <input id="nombre" placeholder="Nombre" autocomplete="off" required />
 
-    <div id="lista"></div>
+      <label>Predio</label>
+      <input id="predio" placeholder="Predio" autocomplete="off" required />
+
+      <label>Foto</label>
+      <input type="file" id="foto" accept="image/*" capture="environment" />
+
+      <div class="row">
+        <button type="button" id="btnGPS">Tomar GPS</button>
+        <button type="submit" class="primary">Guardar</button>
+      </div>
+
+      <p id="gps" class="muted">GPS: (sin capturar)</p>
+    </form>
   </section>
 
-  <!-- MODAL FOTO -->
-  <div id="modalFoto" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); padding:18px; z-index:9999;">
-    <div style="max-width:900px; margin:40px auto; background:#fff; border-radius:16px; overflow:hidden;">
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid #eee;">
-        <b>Foto del registro</b>
-        <button id="btnCerrarFoto" class="btn ghost" type="button">Cerrar</button>
-      </div>
-      <div style="padding:14px;">
-        <img id="imgModalFoto" style="width:100%; max-height:70vh; object-fit:contain; border-radius:12px;">
+  <section class="card">
+    <div class="row space">
+      <h2>Bandeja</h2>
+      <div class="row">
+        <button type="button" id="btnExport">Exportar Excel (CSV)</button>
+        <button type="button" id="btnLimpiar" class="danger">Borrar todo</button>
       </div>
     </div>
-  </div>
 
-  <!-- MODAL MAPA -->
-  <div id="modalMapa" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); padding:18px; z-index:9999;">
-    <div style="max-width:900px; margin:40px auto; background:#fff; border-radius:16px; overflow:hidden;">
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid #eee;">
-        <b>Ubicación del registro</b>
-        <button id="btnCerrarMapa" class="btn ghost" type="button">Cerrar</button>
-      </div>
-      <div style="padding:14px;">
-        <div id="mapModal" style="height:70vh; border-radius:12px; overflow:hidden;"></div>
-      </div>
-    </div>
-  </div>
+    <div id="lista" class="list"></div>
+  </section>
 
-  <!-- Leaflet JS -->
-  <script src="./node_modules/leaflet/dist/leaflet.js"></script>
+  <section class="card">
+    <h2>Mapa</h2>
+    <div id="map"></div>
+  </section>
 
   <script src="db.js"></script>
   <script src="app.js"></script>
+
+  <script>
+    // Registrar Service Worker (PWA / Offline)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js");
+    }
+  </script>
 </body>
 </html>
