@@ -12,7 +12,7 @@
 
   <link rel="stylesheet" href="styles.css">
 
-  <!-- MAPA (Leaflet) -->
+  <!-- MAPA (Leaflet) - sigue por CDN (online). Offline no cargará tiles, pero NO bloquea el formulario -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 
@@ -20,7 +20,12 @@
 
   <header class="topbar">
     <h2>Caracterización Predial</h2>
-    <div class="sub">Modo offline • Guardado local automático</div>
+    <div class="sub">
+      <span id="netPill" style="display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:700;">
+        …
+      </span>
+      <span style="margin-left:6px;">• Guardado local automático (IndexedDB)</span>
+    </div>
   </header>
 
   <main class="card">
@@ -258,10 +263,39 @@
     </div>
   </div>
 
-  <!-- Leaflet JS -->
+  <!-- Leaflet JS (CDN) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
+
   <script src="db.js"></script>
   <script src="app.js"></script>
+
+  <!-- ✅ REGISTRO DEL SERVICE WORKER (esto es lo que faltaba) -->
+  <script>
+    (function(){
+      const pill = document.getElementById("netPill");
+      function paint(){
+        const on = navigator.onLine;
+        pill.textContent = on ? "Con internet" : "Modo avión / Offline";
+        pill.style.background = on ? "#ecfdf5" : "#fef2f2";
+        pill.style.borderColor = on ? "#a7f3d0" : "#fecaca";
+        pill.style.color = on ? "#065f46" : "#7f1d1d";
+      }
+      window.addEventListener("online", paint);
+      window.addEventListener("offline", paint);
+      paint();
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", async () => {
+          try {
+            // OJO: tu archivo se llama service-worker.js (no sw.js)
+            await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
+            // console.log("SW registrado");
+          } catch (e) {
+            console.warn("No se pudo registrar el SW:", e);
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
