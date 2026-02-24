@@ -19,12 +19,20 @@
 <body>
 
   <header class="topbar">
-    <h2>Titulación Predial</h2>
-    <div class="sub">
-      <span id="netPill" style="display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:700;">
-        …
-      </span>
-      <span style="margin-left:6px;">• Guardado local automático (IndexedDB)</span>
+    <!-- ✅ Encabezado con escudo -->
+    <div class="brand">
+      <div class="brand-logo">
+        <img src="ESCUDO.jpeg" alt="Escudo" class="logo-img">
+      </div>
+
+      <div class="brand-title">
+        <h2>Titulación Predial</h2>
+
+        <div class="sub">
+          <span id="netPill" class="netpill">…</span>
+          <span class="nettext">• Guardado local automático (IndexedDB)</span>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -44,17 +52,51 @@
 
         <div class="grid2">
           <div>
+            <label>Fecha de diligenciamiento</label>
+            <input type="date" id="fechaDiligenciamiento" required>
+          </div>
+          <div>
+            <label>Número de encuesta</label>
+            <input type="text" id="numeroEncuesta" placeholder="Ej: 000123" required>
+          </div>
+
+          <div>
+            <label>Zona</label>
+            <select id="zona" required>
+              <option value="">Seleccione...</option>
+              <option>URBANO</option>
+              <option>RURAL</option>
+            </select>
+          </div>
+
+          <div>
             <label>Departamento</label>
-            <input type="text" id="depto" placeholder="Ej: Boyacá">
+            <input type="text" id="depto" value="BOYACÁ" readonly>
           </div>
           <div>
             <label>Municipio</label>
-            <input type="text" id="municipio" placeholder="Ej: Puerto Boyacá">
+            <input type="text" id="municipio" value="PUERTO BOYACÁ" readonly>
           </div>
+
           <div>
-            <label>Barrio / Vereda</label>
-            <input type="text" id="barrio" placeholder="Ej: Centro">
+            <label>Sector</label>
+            <select id="sector" disabled>
+              <option value="">Seleccione zona...</option>
+            </select>
           </div>
+
+          <div>
+            <label>Barrio / Vereda / Centro poblado</label>
+            <select id="barrio" disabled>
+              <option value="">Seleccione zona...</option>
+            </select>
+          </div>
+
+          <div style="grid-column: 1 / -1; display:none;" id="wrapBarrioOtro">
+            <label>Si no aparece, escribir</label>
+            <input type="text" id="barrioOtro" placeholder="Escriba el nombre">
+          </div>
+
           <div>
             <label>Dirección del predio</label>
             <input type="text" id="direccion" placeholder="Ej: Calle 10 # 5-20" required>
@@ -66,6 +108,11 @@
           <div>
             <label>FMI / Matrícula</label>
             <input type="text" id="fmi" placeholder="Opcional">
+          </div>
+
+          <div style="grid-column: 1 / -1;">
+            <label>Otro identificador</label>
+            <input type="text" id="otroIdentificador" placeholder="Opcional">
           </div>
         </div>
 
@@ -87,42 +134,115 @@
 
       <!-- PASO 2: Ocupación -->
       <section class="step" data-step="2">
-        <h3>2) Ocupación</h3>
+        <h3>2) Datos del postulante</h3>
 
         <div class="grid2">
           <div>
-            <label>Nombre del ocupante</label>
-            <input type="text" id="nombreOcupante" placeholder="Nombre completo" required>
-          </div>
-          <div>
-            <label>Teléfono</label>
-            <input type="tel" id="telefonoOcupante" placeholder="Opcional">
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div>
-            <label>Año desde que ocupa</label>
-            <input type="number" id="anioOcupacion" min="1900" max="2100" placeholder="Ej: 2018">
-          </div>
-          <div>
-            <label>Tipo de ocupación</label>
-            <select id="tipoOcupacion">
+            <label>Tipo de documento</label>
+            <select id="post_tipoDoc" required>
               <option value="">Seleccione...</option>
-              <option>Continua</option>
-              <option>Interrumpida</option>
+              <option value="CC">CC</option>
+              <option value="TI">TI</option>
+              <option value="CE">CE</option>
+              <option value="PA">PA</option>
+              <option value="OTRO">OTRO</option>
             </select>
           </div>
+
+          <div>
+            <label>Número de documento</label>
+            <input type="text" id="post_numDoc" placeholder="Ej: 1234567890" required>
+          </div>
+
+          <div>
+            <label>Nombres</label>
+            <input type="text" id="post_nombres" placeholder="Ej: Juan Carlos" required>
+          </div>
+
+          <div>
+            <label>Apellidos</label>
+            <input type="text" id="post_apellidos" placeholder="Ej: Pérez Gómez" required>
+          </div>
+
+          <div>
+            <label>Estado civil</label>
+            <select id="post_estadoCivil" required>
+              <option value="">Seleccione...</option>
+              <option>Soltero(a)</option>
+              <option>Casado(a)</option>
+              <option>Unión libre</option>
+              <option>Viudo(a)</option>
+              <option>Separado(a)</option>
+              <option>Otro</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Fecha de nacimiento</label>
+            <input type="date" id="post_fechaNac" required>
+          </div>
+
+          <div>
+            <label>Edad (automática)</label>
+            <input type="number" id="post_edad" placeholder="Se calcula sola" readonly>
+          </div>
+
+          <div>
+            <label>Teléfono de contacto</label>
+            <input type="tel" id="post_telefono" placeholder="Ej: 3xx xxx xxxx" required>
+          </div>
+
+          <div>
+            <label>¿Es cabeza de hogar?</label>
+            <select id="post_cabezaHogar" required>
+              <option value="">Seleccione...</option>
+              <option>Si</option>
+              <option>No</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Número de integrantes del hogar (incluyéndolo)</label>
+            <input type="number" id="post_integrantesHogar" min="1" placeholder="Ej: 4" required>
+          </div>
         </div>
 
-        <label>¿Cómo ocupó / adquirió el predio?</label>
-        <textarea id="descripcionOcupacion" rows="4" placeholder="Breve descripción"></textarea>
+        <div class="grid2">
+          <div style="grid-column: 1 / -1;">
+            <label>Adjuntar documento de identificación del postulante (foto o PDF)</label>
+            <input type="file" id="post_docAdjunto" accept="image/*,.pdf,application/pdf">
+            <div class="sub">Opcional, pero recomendado.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>Núcleo familiar (se genera según integrantes)</h3>
+          <div class="sub">La fila #1 es el postulante. Complete las filas restantes.</div>
+
+          <div style="overflow:auto; margin-top:10px;">
+            <table class="gridtable" style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="white-space:nowrap;">#</th>
+                  <th style="white-space:nowrap;">Tipo Doc</th>
+                  <th style="white-space:nowrap;">Número</th>
+                  <th style="white-space:nowrap;">Nombres y apellidos</th>
+                  <th style="white-space:nowrap;">Fecha Nac.</th>
+                  <th style="white-space:nowrap;">Edad</th>
+                  <th style="white-space:nowrap;">Parentesco</th>
+                  <th style="white-space:nowrap;">Adjunto Doc</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyIntegrantes"></tbody>
+            </table>
+          </div>
+        </div>
 
         <div class="nav">
           <button type="button" class="btn ghost" id="btnBack2">Anterior</button>
           <button type="button" class="btn" id="btnNext2">Siguiente</button>
         </div>
-      </section>
+</section>
 
       <!-- PASO 3: Hogar -->
       <section class="step" data-step="3">
@@ -131,11 +251,11 @@
         <div class="grid2">
           <div>
             <label>Número de personas en el hogar</label>
-            <input type="number" id="numPersonas" min="1" placeholder="Ej: 4">
+            <input type="number" id="numPersonas" readonly>
           </div>
           <div>
             <label>Número de menores</label>
-            <input type="number" id="numMenores" min="0" placeholder="Ej: 2">
+            <input type="number" id="numMenores" readonly>
           </div>
         </div>
 
@@ -177,7 +297,39 @@
           <label class="check"><input type="checkbox" id="chkServicioPublico"> Tiene recibos/servicios como prueba</label>
           <label class="check"><input type="checkbox" id="chkPredial"> Está al día en predial</label>
           <label class="check"><input type="checkbox" id="chkDispuestoPagar"> Dispuesto a ponerse al día</label>
+        
+
+        <!-- Adjuntos condicionales (PDF o foto) -->
+        <div class="card" style="margin-top:14px;">
+          <h3>Soportes (según checklist)</h3>
+          <div class="sub">Se muestran automáticamente según lo que marque en el checklist.</div>
+
+          <div id="wrapDocHabita" style="display:none; margin-top:12px;">
+            <label><b>Habita actualmente el predio</b> – Adjuntar (carta de compraventa / resolución / certificación JAC)</label>
+            <input type="file" id="docHabita" accept="image/*,.pdf,application/pdf">
+          </div>
+
+          <div id="wrapDocServicios" style="display:none; margin-top:12px;">
+            <label><b>Recibos/servicios como prueba</b> – Adjuntar recibo de servicio público</label>
+            <input type="file" id="docServicios" accept="image/*,.pdf,application/pdf">
+          </div>
+
+          <div id="wrapDocExtrajuicio" style="display:none; margin-top:12px;">
+            <label><b>No tiene otra vivienda</b> – Adjuntar carta extrajuicio</label>
+            <input type="file" id="docExtrajuicio" accept="image/*,.pdf,application/pdf">
+          </div>
+
+          <div id="wrapDocPazysalvo" style="display:none; margin-top:12px;">
+            <label><b>Está al día en predial</b> – Adjuntar paz y salvo</label>
+            <input type="file" id="docPazysalvo" accept="image/*,.pdf,application/pdf">
+          </div>
+
+          <div id="wrapDocCompromiso" style="display:none; margin-top:12px;">
+            <label><b>No está al día en predial y está dispuesto a ponerse al día</b> – Adjuntar carta de compromiso</label>
+            <input type="file" id="docCompromiso" accept="image/*,.pdf,application/pdf">
+          </div>
         </div>
+</div>
 
         <label>Observaciones (Checklist)</label>
         <textarea id="obsChecklist" rows="3" placeholder="Observaciones"></textarea>
@@ -199,16 +351,61 @@
         <div class="card" style="margin-top:14px;">
           <h3>Ubicación y evidencia</h3>
 
-          <div class="toolbar">
+          
+          <div class="toolbar" style="align-items:flex-start;">
             <button class="btn ghost" id="btnGPS" type="button">Capturar GPS</button>
-            <input type="file" id="foto" accept="image/*" capture="environment">
+
+            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; width:100%;">
+              <div>
+                <div class="sub" style="margin-bottom:6px;"><b>Foto 1</b> (opcional)</div>
+                <input type="file" id="foto1" accept="image/*" capture="environment">
+                <img id="fotoPrev1" style="max-width:220px; display:none; margin-top:8px; border-radius:12px;">
+              </div>
+              <div>
+                <div class="sub" style="margin-bottom:6px;"><b>Foto 2</b> (opcional)</div>
+                <input type="file" id="foto2" accept="image/*" capture="environment">
+                <img id="fotoPrev2" style="max-width:220px; display:none; margin-top:8px; border-radius:12px;">
+              </div>
+              <div>
+                <div class="sub" style="margin-bottom:6px;"><b>Foto 3</b> (opcional)</div>
+                <input type="file" id="foto3" accept="image/*" capture="environment">
+                <img id="fotoPrev3" style="max-width:220px; display:none; margin-top:8px; border-radius:12px;">
+              </div>
+              <div>
+                <div class="sub" style="margin-bottom:6px;"><b>Foto 4</b> (opcional)</div>
+                <input type="file" id="foto4" accept="image/*" capture="environment">
+                <img id="fotoPrev4" style="max-width:220px; display:none; margin-top:8px; border-radius:12px;">
+              </div>
+            </div>
           </div>
 
-          <div id="gpsInfo" class="sub">GPS: sin capturar</div>
-
-          <img id="fotoPreview" style="max-width:220px; display:none; margin-top:10px; border-radius:12px;">
-
+<div id="gpsInfo" class="sub">GPS: sin capturar</div>
           <div id="map" style="height:280px; margin-top:10px; border-radius:12px; overflow:hidden;"></div>
+        </div>
+
+
+        <!-- FIRMAS -->
+        <div class="card" style="margin-top:14px;">
+          <h3>Firmas</h3>
+          <div class="sub">Firma con el dedo o con stylus. (Se guarda como imagen.)</div>
+
+          <div class="grid2" style="margin-top:10px;">
+            <div>
+              <label><b>Firma del encuestado</b></label>
+              <canvas id="firmaEncuestado" width="520" height="180" style="width:100%; border:1px solid #e5e7eb; border-radius:12px; background:#fff;"></canvas>
+              <div style="margin-top:8px; display:flex; gap:8px;">
+                <button type="button" class="btn ghost" id="btnClearFirmaEncuestado">Limpiar</button>
+              </div>
+            </div>
+
+            <div>
+              <label><b>Firma del encuestador</b></label>
+              <canvas id="firmaEncuestador" width="520" height="180" style="width:100%; border:1px solid #e5e7eb; border-radius:12px; background:#fff;"></canvas>
+              <div style="margin-top:8px; display:flex; gap:8px;">
+                <button type="button" class="btn ghost" id="btnClearFirmaEncuestador">Limpiar</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="note">
@@ -269,16 +466,15 @@
   <script src="db.js"></script>
   <script src="app.js"></script>
 
-  <!-- ✅ REGISTRO DEL SERVICE WORKER (esto es lo que faltaba) -->
+  <!-- ✅ REGISTRO DEL SERVICE WORKER -->
   <script>
     (function(){
       const pill = document.getElementById("netPill");
       function paint(){
         const on = navigator.onLine;
         pill.textContent = on ? "Con internet" : "Modo avión / Offline";
-        pill.style.background = on ? "#ecfdf5" : "#fef2f2";
-        pill.style.borderColor = on ? "#a7f3d0" : "#fecaca";
-        pill.style.color = on ? "#065f46" : "#7f1d1d";
+        pill.classList.toggle("online", on);
+        pill.classList.toggle("offline", !on);
       }
       window.addEventListener("online", paint);
       window.addEventListener("offline", paint);
@@ -287,9 +483,7 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", async () => {
           try {
-            // OJO: tu archivo se llama service-worker.js (no sw.js)
             await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
-            // console.log("SW registrado");
           } catch (e) {
             console.warn("No se pudo registrar el SW:", e);
           }
