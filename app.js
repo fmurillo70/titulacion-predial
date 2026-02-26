@@ -34,8 +34,6 @@
     return (e >= 0 && e <= 120) ? e : "";
   }
 
-
-
   // ====== Paso 3 (Hogar): cálculos automáticos ======
   function autoCalcularHogar(){
     const numPersonasEl = $("numPersonas");
@@ -56,8 +54,6 @@
     // Si no hay edades (aún), dejamos 0 para mantener consistencia en export.
     numMenoresEl.value = String(menores);
   }
-
-  
 
   // ====== Paso 4 (Checklist): adjuntos condicionales ======
   function _fileToObj(file, fallbackName){
@@ -89,7 +85,8 @@
     // Si NO está al día en predial y SÍ está dispuesto a ponerse al día => carta de compromiso
     setWrapVisible("wrapDocCompromiso", (!predial && dispuesto));
   }
-// ====== Steps ======
+
+  // ====== Steps ======
   const form = $("formEncuesta");
   const steps = Array.from(document.querySelectorAll(".step"));
   const progressBar = $("progressBar");
@@ -567,13 +564,15 @@
   const padEncuestado = setupSignaturePad(canvasFirmaEncuestado, btnClearFirmaEncuestado);
   const padEncuestador = setupSignaturePad(canvasFirmaEncuestador, btnClearFirmaEncuestador);
 
-
   // =========================
   // Guardar
   // =========================
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     hideMsg();
+
+    const faltantes = [];
+    const flag = (msg) => { if (msg) faltantes.push(msg); };
 
     try {
       const fechaDiligenciamiento = $("fechaDiligenciamiento")?.value || "";
@@ -582,17 +581,17 @@
       const direccion = $("direccion")?.value?.trim() || "";
       const sector = $("sector")?.value || "";
 
-      if (!fechaDiligenciamiento) { showStep(1); setMsg("❌ Falta Fecha de diligenciamiento.", "bad"); return; }
-      if (!numeroEncuesta) { showStep(1); setMsg("❌ Falta Número de encuesta.", "bad"); return; }
-      if (!zona) { showStep(1); setMsg("❌ Falta Zona.", "bad"); return; }
-      if (!direccion) { showStep(1); setMsg("❌ Falta Dirección del predio.", "bad"); return; }
+      if (!(fechaDiligenciamiento)) { flag("Falta Fecha de diligenciamiento."); }
+      if (!(numeroEncuesta)) { flag("Falta Número de encuesta."); }
+      if (!(zona)) { flag("Falta Zona."); }
+      if (!(direccion)) { flag("Falta Dirección del predio."); }
 
       let barrio = $("barrio")?.value || "";
       let tipoLugar = $("barrio")?.selectedOptions?.[0]?.dataset?.tipo || "";
 
       if (barrio === "OTRO"){
         const escrito = $("barrioOtro")?.value?.trim() || "";
-        if (!escrito) { showStep(1); setMsg("❌ Seleccionó OTRO: debe escribir barrio/vereda.", "bad"); return; }
+        if (!(escrito)) { flag("Seleccionó OTRO: debe escribir barrio/vereda."); }
         barrio = escrito;
         tipoLugar = "OTRO";
       }
@@ -609,23 +608,23 @@
       const post_cabezaHogar = $("post_cabezaHogar")?.value || "";
       const post_integrantesHogar = Number($("post_integrantesHogar")?.value || 0);
 
-      if (!post_tipoDoc) { showStep(2); setMsg("❌ Falta Tipo de documento.", "bad"); return; }
-      if (!post_numDoc) { showStep(2); setMsg("❌ Falta Número de documento.", "bad"); return; }
-      if (!post_nombres) { showStep(2); setMsg("❌ Falta Nombres.", "bad"); return; }
-      if (!post_apellidos) { showStep(2); setMsg("❌ Falta Apellidos.", "bad"); return; }
-      if (!post_estadoCivil) { showStep(2); setMsg("❌ Falta Estado civil.", "bad"); return; }
-      if (!post_fechaNac) { showStep(2); setMsg("❌ Falta Fecha de nacimiento.", "bad"); return; }
-      if (post_edad === "") { showStep(2); setMsg("❌ Fecha de nacimiento inválida.", "bad"); return; }
-      if (!post_telefono) { showStep(2); setMsg("❌ Falta Teléfono de contacto.", "bad"); return; }
-      if (!post_cabezaHogar) { showStep(2); setMsg("❌ Falta indicar si es cabeza de hogar.", "bad"); return; }
-      if (!post_integrantesHogar || post_integrantesHogar < 1) { showStep(2); setMsg("❌ Falta número de integrantes del hogar.", "bad"); return; }
+      if (!(post_tipoDoc)) { flag("Falta Tipo de documento."); }
+      if (!(post_numDoc)) { flag("Falta Número de documento."); }
+      if (!(post_nombres)) { flag("Falta Nombres."); }
+      if (!(post_apellidos)) { flag("Falta Apellidos."); }
+      if (!(post_estadoCivil)) { flag("Falta Estado civil."); }
+      if (!(post_fechaNac)) { flag("Falta Fecha de nacimiento."); }
+      if (post_edad === "") { showStep(2); flag("Fecha de nacimiento inválida."); }
+      if (!(post_telefono)) { flag("Falta Teléfono de contacto."); }
+      if (!(post_cabezaHogar)) { flag("Falta indicar si es cabeza de hogar."); }
+      if (!(post_integrantesHogar || post_integrantesHogar < 1)) { flag("Falta número de integrantes del hogar."); }
 
       if (tbodyIntegrantes && tbodyIntegrantes.children.length !== post_integrantesHogar) rebuildGrid(post_integrantesHogar);
       syncPostulanteToRow1();
 
       const integrantes = readGridToArray();
       if (integrantes.length !== post_integrantesHogar) {
-        showStep(2); setMsg("❌ La grilla no coincide con integrantes.", "bad"); return;
+        showStep(2); flag("La grilla no coincide con integrantes.");
       }
 
       for (let i=0; i<integrantes.length; i++) {
@@ -634,10 +633,10 @@
         if (i === 0) {
           // Fila 1 = postulante (obligatorio)
           if (!r.tipoDoc || !r.numDoc || !r.nombre || !r.fechaNac || !r.parentesco) {
-            showStep(2); setMsg(`❌ Falta información del postulante en la grilla.`, "bad"); return;
+            showStep(2); flag("Falta información del postulante en la grilla.");
           }
           const e2 = calcEdad(r.fechaNac);
-          if (e2 === "") { showStep(2); setMsg(`❌ Fecha de nacimiento inválida del postulante en la grilla.`, "bad"); return; }
+          if (e2 === "") { showStep(2); flag("Fecha de nacimiento inválida del postulante en la grilla."); }
           r.edad = String(e2);
           continue;
         }
@@ -652,13 +651,12 @@
         // Si empiezan a diligenciar, pedimos lo básico
         if (!r.nombre || !r.parentesco) {
           showStep(2);
-          setMsg(`❌ En el integrante #${i+1}: si diligencia la fila, debe indicar al menos Nombre completo y Parentesco.`, "bad");
-          return;
+          flag(`En el integrante #${i+1}: si diligencia la fila, debe indicar al menos Nombre completo y Parentesco.`);
         }
 
         if (r.fechaNac) {
           const e2 = calcEdad(r.fechaNac);
-          if (e2 === "") { showStep(2); setMsg(`❌ Fecha de nacimiento inválida en integrante #${i+1}.`, "bad"); return; }
+          if (e2 === "") { showStep(2); flag(`Fecha de nacimiento inválida en integrante #${i+1}.`); }
           r.edad = String(e2);
         } else {
           r.edad = "";
@@ -679,8 +677,6 @@
         });
       }
 
-
-
       // Paso 4 - Adjuntos del checklist (PDF o foto)
       const fileHabita = $("docHabita")?.files?.[0] || null;
       const fileServicios = $("docServicios")?.files?.[0] || null;
@@ -695,12 +691,12 @@
       const chkDispuestoPagar = $("chkDispuestoPagar")?.checked ? "Si" : "No";
 
       // Validaciones condicionales ("debe pedir")
-      if (chkHabita === "Si" && !fileHabita) { showStep(4); setMsg("❌ Marcó 'Habita actualmente el predio': debe adjuntar carta de compraventa / resolución / certificación JAC.", "bad"); return; }
-      if (chkServicioPublico === "Si" && !fileServicios) { showStep(4); setMsg("❌ Marcó 'Tiene recibos/servicios como prueba': debe adjuntar un recibo de servicio público.", "bad"); return; }
+      if (chkHabita === "Si" && !fileHabita) { showStep(4); flag("Marcó 'Habita actualmente el predio': debe adjuntar carta de compraventa / resolución / certificación JAC."); }
+      if (chkServicioPublico === "Si" && !fileServicios) { showStep(4); flag("Marcó 'Tiene recibos/servicios como prueba': debe adjuntar un recibo de servicio público."); }
       // Opción A: si NO tiene otra vivienda (checkbox sin marcar) => carta extrajuicio
-      if (chkOtraVivienda === "No" && !fileExtrajuicio) { showStep(4); setMsg("❌ Si NO tiene otra vivienda, debe adjuntar carta extrajuicio.", "bad"); return; }
-      if (chkPredial === "Si" && !filePazysalvo) { showStep(4); setMsg("❌ Marcó 'Está al día en predial': debe adjuntar paz y salvo.", "bad"); return; }
-      if (chkPredial === "No" && chkDispuestoPagar === "Si" && !fileCompromiso) { showStep(4); setMsg("❌ Si NO está al día en predial y está dispuesto a ponerse al día, debe adjuntar carta de compromiso.", "bad"); return; }
+      if (chkOtraVivienda === "No" && !fileExtrajuicio) { showStep(4); flag("Si NO tiene otra vivienda, debe adjuntar carta extrajuicio."); }
+      if (chkPredial === "Si" && !filePazysalvo) { showStep(4); flag("Marcó 'Está al día en predial': debe adjuntar paz y salvo."); }
+      if (chkPredial === "No" && chkDispuestoPagar === "Si" && !fileCompromiso) { showStep(4); flag("Si NO está al día en predial y está dispuesto a ponerse al día, debe adjuntar carta de compromiso."); }
 
       const checklistDocs = {
         habita: _fileToObj(fileHabita, "habita_predio"),
@@ -711,13 +707,13 @@
       };
 
       // Firmas (obligatorias)
-      if (padEncuestado.isEmpty()) { showStep(5); setMsg("❌ Falta la firma del encuestado.", "bad"); return; }
-      if (padEncuestador.isEmpty()) { showStep(5); setMsg("❌ Falta la firma del encuestador.", "bad"); return; }
+      if (padEncuestado.isEmpty()) { showStep(5); flag("Falta la firma del encuestado."); }
+      if (padEncuestador.isEmpty()) { showStep(5); flag("Falta la firma del encuestador."); }
 
       const firmaEncBlob = await padEncuestado.toBlob();
       const firmaEncrBlob = await padEncuestador.toBlob();
-      if (!firmaEncBlob) { showStep(5); setMsg("❌ No se pudo generar la imagen de la firma del encuestado.", "bad"); return; }
-      if (!firmaEncrBlob) { showStep(5); setMsg("❌ No se pudo generar la imagen de la firma del encuestador.", "bad"); return; }
+      if (!(firmaEncBlob)) { flag("No se pudo generar la imagen de la firma del encuestado."); }
+      if (!(firmaEncrBlob)) { flag("No se pudo generar la imagen de la firma del encuestador."); }
 
       const firmasObj = {
         encuestado: { blob: firmaEncBlob, name: "firma_encuestado.png", type: "image/png", size: firmaEncBlob.size || 0 },
@@ -766,7 +762,7 @@
         chkServicioPublico: chkServicioPublico,
         chkPredial: chkPredial,
         chkDispuestoPagar: chkDispuestoPagar,
-        
+
         obsChecklist: $("obsChecklist")?.value || "",
 
         // Paso 5
@@ -776,7 +772,8 @@
       const item = {
         id: `enc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
         createdAt: Date.now(),
-        status: "PENDIENTE_SYNC",
+        status: (faltantes.length ? "INCOMPLETA" : "PENDIENTE_SYNC"),
+        faltantes,
         data,
         gps: gpsActual,
         fotos: fotoBlobs.filter(Boolean).map((b, i) => ({ blob: b, name: b.name || `foto_${i+1}.jpg`, type: b.type || "image/jpeg", size: b.size || 0 })),
@@ -806,7 +803,12 @@
       // limpiar firmas
       padEncuestado.clear();
       padEncuestador.clear();
-setMsg("✅ Encuesta guardada offline correctamente.", "ok");
+
+      if (faltantes.length){
+        setMsg("✅ Guardada offline, pero quedó INCOMPLETA: " + faltantes.join(" | "), "ok");
+      } else {
+        setMsg("✅ Encuesta guardada offline correctamente.", "ok");
+      }
       showStep(1);
       await renderLista();
     } catch (err) {
@@ -847,7 +849,38 @@ setMsg("✅ Encuesta guardada offline correctamente.", "ok");
     modalMapa.style.display = "none";
   }
 
-  btnRefrescar?.addEventListener("click", renderLista);
+  // ✅ ORGANIZADO: Refrescar con "loading" + evita doble clic
+  let refrescando = false;
+  async function refrescarBandeja({ showToast = true } = {}){
+    if (refrescando) return;
+    refrescando = true;
+
+    const btn = btnRefrescar;
+    const oldText = btn ? btn.textContent : "";
+    if (btn){
+      btn.disabled = true;
+      btn.textContent = "Refrescando...";
+    }
+
+    try{
+      await renderLista();
+      if (showToast) setMsg("✅ Bandeja actualizada.", "ok");
+    }catch(err){
+      console.error(err);
+      setMsg("❌ No se pudo refrescar la bandeja: " + (err?.message || err), "bad");
+    }finally{
+      if (btn){
+        btn.disabled = false;
+        btn.textContent = oldText || "Refrescar";
+      }
+      refrescando = false;
+    }
+  }
+
+  btnRefrescar?.addEventListener("click", () => {
+    hideMsg();
+    refrescarBandeja({ showToast: true });
+  });
 
   btnBorrarTodo?.addEventListener("click", async () => {
     const ok = confirm("¿Borrar todo lo guardado local? (solo pruebas)");
