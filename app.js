@@ -103,13 +103,55 @@
     if (n === 4) setTimeout(() => updateChecklistDocsUI(), 50);
   }
 
-  [["btnNext1",2],["btnBack2",1],["btnNext2",3],["btnBack3",2],["btnNext3",4],["btnBack4",3],["btnNext4",5],["btnBack5",4]]
-    .forEach(([id,to]) => $(id)?.addEventListener("click", () => showStep(to)));
+// ===== VALIDACIÓN ANTES DE AVANZAR =====
+
+// Botones "Siguiente"
+[
+  ["btnNext1", 1, 2],
+  ["btnNext2", 2, 3],
+  ["btnNext3", 3, 4],
+  ["btnNext4", 4, 5]
+].forEach(([id, pasoActual, pasoDestino]) => {
+  $(id)?.addEventListener("click", () => {
+    const V = window.ValidacionesPredial;
+    if (V && typeof V.validarPasoDOM === "function") {
+      const res = V.validarPasoDOM(pasoActual);
+      if (!res.ok) {
+        alert(res.faltantes.join("\n"));
+        return; // NO AVANZA
+      }
+    }
+    showStep(pasoDestino);
+  });
+});
+
+// Botones "Anterior" (sin validar)
+[
+  ["btnBack2",1],
+  ["btnBack3",2],
+  ["btnBack4",3],
+  ["btnBack5",4]
+].forEach(([id,to]) => {
+  $(id)?.addEventListener("click", () => showStep(to));
+});
 
   // Paso 4: mostrar/ocultar adjuntos según selección
   ["chkHabita","chkOtraVivienda","chkServicioPublico","chkPredial","chkDispuestoPagar"].forEach(id => {
     $(id)?.addEventListener("change", updateChecklistDocsUI);
   });
+
+  // Auto-marcar y BLOQUEAR checkbox Paso 4 según Paso 3
+$("otrosPredios")?.addEventListener("change", () => {
+  const v = ($("otrosPredios")?.value || "").trim().toLowerCase();
+  const chk = $("chkOtraVivienda");
+  if (!chk) return;
+
+  const esSi = (v === "si" || v === "sí");
+  chk.checked = esSi;
+
+  // Si es "Sí", se bloquea para que no lo puedan cambiar
+  chk.disabled = esSi;
+});
 
   // ===== Mensajes =====
   const msgId = "msgEstadoGuardar";
@@ -570,6 +612,19 @@
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     hideMsg();
+
+    // ✅ Validar antes de guardar
+  const V = window.ValidacionesPredial;
+  if (V && typeof V.validarPasoDOM === "function") {
+    for (const paso of [1,2,3,4,5]) {
+      const res = V.validarPasoDOM(paso);
+      if (res && res.ok === false) {
+        alert((res.faltantes || []).join("\n"));
+        showStep(paso);
+        return; // NO guarda
+      }
+    }
+  }
 
     const faltantes = [];
     const flag = (msg) => { if (msg) faltantes.push(msg); };
