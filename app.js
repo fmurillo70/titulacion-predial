@@ -831,6 +831,8 @@ $("otrosPredios")?.addEventListener("change", () => {
         faltantes,
         data,
         gps: gpsActual,
+         // ✅ NUEVO: guardar firmas
+        firmas: firmasObj,
         fotos: fotoBlobs.filter(Boolean).map((b, i) => ({ blob: b, name: b.name || `foto_${i+1}.jpg`, type: b.type || "image/jpeg", size: b.size || 0 })),
         // Compatibilidad: mantenemos "foto" como la primera foto si existe
         foto: fotoBlobs.find(Boolean) ? { blob: fotoBlobs.find(Boolean), name: (fotoBlobs.find(Boolean).name || "foto_1.jpg"), type: (fotoBlobs.find(Boolean).type || "image/jpeg"), size: (fotoBlobs.find(Boolean).size || 0) } : null,
@@ -945,10 +947,11 @@ $("otrosPredios")?.addEventListener("change", () => {
     setMsg("🗑️ Se borró todo lo local.", "ok");
   });
 
-  btnExportar?.addEventListener("click", async () => {
-    const all = await window.DB.all();
-    exportCSV(all);
-  });
+btnExportar?.addEventListener("click", async () => {
+  const all = await window.DB.all();
+  await exportarZIP(all);
+});
+btnExportar && (btnExportar.textContent = "Exportar (ZIP)");
 
   async function renderLista(){
     if (!lista) return;
@@ -1156,7 +1159,205 @@ $("otrosPredios")?.addEventListener("change", () => {
     a.remove();
     URL.revokeObjectURL(url);
   }
+  
+// ================================
+// EXPORTAR ZIP (Estructura + Adjuntos)
+// ================================
+function safeName(name, fallback = "archivo") {
+  const n = String(name || fallback).trim();
+  return n.replace(/[\\/:*?"<>|]+/g, "_");
+}
 
+async function addToFolder(folder, fileObj, fallbackName) {
+  if (!fileObj) return;
+
+  if (Array.isArray(fileObj)) {
+    let i = 1;
+    for (const f of fileObj) {
+      await addToFolder(folder, f, `${fallbackName}_${i}`);
+      i++;
+    }
+    return;
+  }
+
+  const blob = (fileObj instanceof Blob) ? fileObj :
+               (fileObj?.blob instanceof Blob ? fileObj.blob : null);
+
+  if (!blob) return;
+
+  let ext = "";
+  const t = blob.type || fileObj?.type || "";
+  if (t.includes("png")) ext = ".png";
+  else if (t.includes("jpeg") || t.includes("jpg")) ext = ".jpg";
+  else if (t.includes("pdf")) ext = ".pdf";
+
+  const fname = safeName(fileObj?.name || (fallbackName + ext));
+  folder.file(fname, blob);
+}
+
+async function exportarZIP(rows){
+  if (!rows || rows.length === 0){
+    alert("No hay registros para exportar.");
+    return;
+  }
+
+  if (typeof JSZip === "undefined"){
+    alert("JSZip no está cargado. Revisa index.html");
+    return;
+  }
+
+  const zip = new JSZip();
+  const rootEnc = zip.folder("ENCUESTAS");
+  const rootCon = zip.folder("CONSOLIDADO");
+
+  // =====================
+// CONSOLIDADO EN EXCEL
+// =====================
+if (typeof XLSX === "undefined") {
+  alert("XLSX no está cargado. Revisa index.html");
+  return;
+}
+
+const items = rows.map(r => {
+  const d = r.data || {};
+  const ints = d.integrantes || [];
+  const docsArr = r.docs?.integrantes || [];
+
+  const nombres = ints.map(x => x.nombre || "").join(" | ");
+  const parentescos = ints.map(x => x.parentesco || "").join(" | ");
+  const docsFlags = ints.map((_, i) =>
+    (i === 0 ? (r.docs?.postulante ? "SI" : "NO") : (docsArr[i] ? "SI" : "NO"))
+  ).join(" | ");
+
+  return {
+    fecha_registro_app: new Date(r.createdAt).toLocaleString(),
+    status: r.status || "",
+    fecha_diligenciamiento: d.fechaDiligenciamiento || "",
+    numero_encuesta: d.numeroEncuesta || "",
+    zona: d.zona || "",
+    sector: d.sector || "",
+    tipo_lugar: d.tipoLugar || "",
+    barrio_vereda: d.barrio || "",
+    depto: d.depto || "",
+    municipio: d.municipio || "",
+    direccion: d.direccion || "",
+    cedula_catastral: d.cedulaCatastral || "",
+    fmi: d.fmi || "",
+    otro_identificador: d.otroIdentificador || "",
+    uso_inmueble: d.usoInmueble || "",
+
+    post_tipo_doc: d.post_tipoDoc || "",
+    post_num_doc: d.post_numDoc || "",
+    post_nombres: d.post_nombres || "",
+    post_apellidos: d.post_apellidos || "",
+    post_estado_civil: d.post_estadoCivil || "",
+    post_fecha_nac: d.post_fechaNac || "",
+    post_edad: d.post_edad ?? "",
+    post_telefono: d.post_telefono || "",
+    post_cabeza_hogar: d.post_cabezaHogar || "",
+    post_integrantes_hogar: d.post_integrantesHogar || "",
+
+    tiene_doc_postulante: r.docs?.postulante ? "SI" : "NO",
+    integrantes_total: ints.length,
+    integrantes_nombres: nombres,
+    integrantes_parentescos: parentescos,
+    integrantes_tienen_doc: docsFlags,
+
+    num_personas: d.numPersonas || "",
+    num_menores: d.numMenores || "",
+    ingresos: d.ingresos || "",
+    subsidio_vivienda: d.subsidioVivienda || "",
+    otros_predios: d.otrosPredios || "",
+
+    chk_habita: d.chkHabita ? "SI" : "NO",
+    chk_otra_vivienda: d.chkOtraVivienda ? "SI" : "NO",
+    chk_servicio_publico: d.chkServicioPublico ? "SI" : "NO",
+    chk_predial: d.chkPredial ? "SI" : "NO",
+    chk_dispuesto_pagar: d.chkDispuestoPagar ? "SI" : "NO",
+    obs_checklist: d.obsChecklist || "",
+    observaciones: d.observaciones || "",
+
+    gps_lat: r.gps?.lat ?? "",
+    gps_lng: r.gps?.lng ?? "",
+    gps_accuracy: r.gps?.accuracy ?? "",
+
+    tiene_foto: (r.fotos?.length || r.foto) ? "SI" : "NO",
+    evidencias: "Ver evidencias",
+    evidencias_link: `../ENCUESTAS/ENC_${r.id}/`
+  };
+});
+
+const ws = XLSX.utils.json_to_sheet(items);
+
+// ====== Convertir "evidencias" en hipervínculo ======
+const headers = Object.keys(items[0] || {});
+const colEvi = headers.indexOf("evidencias");
+const colLink = headers.indexOf("evidencias_link");
+
+if (colEvi >= 0 && colLink >= 0) {
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+
+  for (let R = 1; R <= range.e.r; R++) {
+    const cellE = XLSX.utils.encode_cell({ r: R, c: colEvi });
+    const cellL = XLSX.utils.encode_cell({ r: R, c: colLink });
+
+    const link = ws[cellL]?.v;
+    if (ws[cellE] && link) {
+      ws[cellE].l = { Target: link };
+    }
+  }
+
+  // Ocultar la columna evidencias_link
+  ws["!cols"] = ws["!cols"] || [];
+  ws["!cols"][colLink] = { hidden: true };
+}
+
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, "Consolidado");
+
+const xlsxArray = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+rootCon.file("consolidado.xlsx", xlsxArray);
+
+  for (const it of rows){
+    const encId = safeName(it.id || Date.now());
+    const encFolder = rootEnc.folder(`ENC_${encId}`);
+
+    encFolder.file("datos.json", JSON.stringify(it.data || {}, null, 2));
+
+    const fotosF = encFolder.folder("fotos");
+    const firmasF = encFolder.folder("firmas");
+    const anexosF = encFolder.folder("anexos");
+
+    await addToFolder(fotosF, it.fotos || null, "foto");
+    await addToFolder(firmasF, it.firmas?.encuestado || null, "firma_encuestado");
+    await addToFolder(firmasF, it.firmas?.encuestador || null, "firma_encuestador");
+
+    await addToFolder(anexosF, it.docs?.postulante || null, "doc_postulante");
+
+    const docsInts = it.docs?.integrantes || [];
+    for (let i=0; i<docsInts.length; i++){
+      await addToFolder(anexosF, docsInts[i], `doc_integrante_${i+1}`);
+    }
+
+    const ck = it.docs?.checklist || {};
+    await addToFolder(anexosF, ck.habita || null, "habita");
+    await addToFolder(anexosF, ck.servicios || null, "servicios");
+    await addToFolder(anexosF, ck.extrajuicio || null, "extrajuicio");
+    await addToFolder(anexosF, ck.pazysalvo || null, "pazysalvo");
+    await addToFolder(anexosF, ck.compromiso || null, "compromiso");
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "PAQUETE_ENCUESTAS.zip";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
   // Init
   showStep(1);
   renderLista();
